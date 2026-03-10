@@ -21,6 +21,11 @@ build/
 env/
 venv/
 
+# AWS/SSH Keys - NEVER commit these!
+*.pem
+*.key
+*.ppk
+
 # IDE
 .vscode/
 .idea/
