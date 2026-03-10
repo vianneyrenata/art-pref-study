@@ -84,12 +84,20 @@ def get_image_ids_from_db(include_embeddings=False):
     return results['ids'], results['metadatas'], None
 
 
-def create_session(participant_id: str, demographics: dict = None) -> dict:
-    """Create a new experiment session."""
+def create_session(participant_id: str, demographics: dict = None, algorithm: str = None) -> dict:
+    """Create a new experiment session.
+
+    Args:
+        participant_id: Unique participant identifier
+        demographics: Demographic information
+        algorithm: Override algorithm ('bald' or 'random'). If None, uses CONFIG setting.
+    """
     session_id = f"{participant_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     # Determine if we need embeddings (for BALD algorithm)
-    use_bald = CONFIG['ALGORITHM'] == 'bald' and BALD_AVAILABLE
+    # Use provided algorithm parameter, otherwise fall back to CONFIG
+    selected_algorithm = algorithm if algorithm else CONFIG['ALGORITHM']
+    use_bald = selected_algorithm == 'bald' and BALD_AVAILABLE
     need_embeddings = use_bald
 
     # Get available images (and embeddings if needed)
@@ -140,6 +148,7 @@ def create_session(participant_id: str, demographics: dict = None) -> dict:
         'start_time': datetime.now().isoformat(),
         'demographics': demographics or {},
         'use_bald': use_bald,
+        'algorithm': selected_algorithm,  # Track which algorithm was assigned
     }
 
     sessions[session_id] = session
@@ -203,17 +212,30 @@ def start_session():
     participant_id = data.get('participant_id', 'anonymous')
     demographics = data.get('demographics', {})
 
-    session = create_session(participant_id, demographics)
+    # Read algorithm from request body (set by frontend from URL parameter)
+    study_code = data.get('study')
+
+    # Map study codes to algorithms (discreet naming)
+    algorithm = None
+    if study_code == 'one':
+        algorithm = 'bald'
+    elif study_code == 'two':
+        algorithm = 'random'
+    # If no study code provided, will use default from CONFIG
+
+    session = create_session(participant_id, demographics, algorithm=algorithm)
 
     # Save session metadata (config and tracking info only)
     metadata = {
         'session_id': session['session_id'],
         'participant_id': participant_id,
         'start_time': session['start_time'],
+        'assigned_algorithm': session['algorithm'],  # Record which algorithm was assigned
+        'study_code': study_code,  # Record the study URL parameter for reference
         'config': {
             'n_practice': CONFIG['N_PRACTICE_TRIALS'],
             'n_main': CONFIG['N_MAIN_TRIALS'],
-            'algorithm': CONFIG['ALGORITHM'],
+            'algorithm': session['algorithm'],  # Use actual assigned algorithm, not CONFIG
             'recommender': CONFIG['RECOMMENDER'],
             'survey_interval': CONFIG['SURVEY_INTERVAL'],
             'recommendations': {
@@ -250,7 +272,7 @@ def start_session():
             'manual_show_n': CONFIG['MANUAL_SHOW_N'],
             'manual_select_n': CONFIG['MANUAL_SELECT_N'],
         },
-        'algorithm': CONFIG['ALGORITHM'],
+        'algorithm': session['algorithm'],  # Return actual assigned algorithm
     })
 
 

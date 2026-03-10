@@ -159,6 +159,10 @@ class ArtPreferenceStudy {
             return;
         }
 
+        // Read study parameter from URL (?study=one or ?study=two)
+        const urlParams = new URLSearchParams(window.location.search);
+        const studyCode = urlParams.get('study');
+
         try {
             const response = await fetch('/api/start_session', {
                 method: 'POST',
@@ -169,7 +173,8 @@ class ArtPreferenceStudy {
                         age_range: ageRange,
                         gender: gender,
                         education: education
-                    }
+                    },
+                    study: studyCode  // Pass study code to backend
                 })
             });
 
