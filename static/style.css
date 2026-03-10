@@ -147,6 +147,12 @@ textarea {
     font-family: inherit;
 }
 
+/* Smaller height for Like/Dislike text boxes in check-in survey */
+#features-like,
+#features-dislike {
+    min-height: 40px;
+}
+
 /* === Buttons === */
 .btn {
     background: #667eea;
