@@ -472,7 +472,8 @@ class ArtPreferenceStudy {
         const surveyData = {
             certainty: formData.get('certainty'),
             know_prefs: formData.get('know-prefs'),
-            strategy: formData.get('strategy') || ''
+            features_like: formData.get('features-like') || '',
+            features_dislike: formData.get('features-dislike') || ''
         };
 
         try {

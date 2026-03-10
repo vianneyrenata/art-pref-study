@@ -395,7 +395,7 @@ def save_survey():
     file_exists = csv_path.exists()
 
     with open(csv_path, 'a', newline='') as f:
-        fieldnames = ['comparison_number', 'certainty', 'know_prefs', 'strategy', 'timestamp']
+        fieldnames = ['comparison_number', 'certainty', 'know_prefs', 'features_like', 'features_dislike', 'timestamp']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
 
         if not file_exists:
@@ -406,7 +406,8 @@ def save_survey():
             'comparison_number': data.get('comparison_number'),
             'certainty': survey_data.get('certainty'),
             'know_prefs': survey_data.get('know_prefs'),
-            'strategy': survey_data.get('strategy', ''),
+            'features_like': survey_data.get('features_like', ''),
+            'features_dislike': survey_data.get('features_dislike', ''),
             'timestamp': datetime.now().isoformat(),
         })
 
