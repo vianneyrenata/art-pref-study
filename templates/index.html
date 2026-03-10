@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Preference Study</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome/Consent Screen -->
+        <div id="screen-welcome" class="screen active">
+            <h1>Art Preference Study</h1>
+            <h2>Welcome</h2>
+            <p>Thank you for participating in this study about art preferences!</p>
+
+            <div class="warning-box">
+                <strong>Content Note:</strong> Some images in this study may contain artistic nudity, graphic, or violent imagery.
+            </div>
+
+            <p><strong>What you'll do:</strong></p>
+            <ul>
+                <li>Compare pairs of artworks and select your preferred image</li>
+            </ul>
+
+            <p><strong>Instructions:</strong></p>
+            <ul>
+                <li>Click on your preferred image</li>
+                <li>Go with your first instinct - don't overthink it</li>
+                <li>There are no right or wrong answers</li>
+                <li>From time to time, a short check-in survey will appear</li>
+                <li>Your responses are completely anonymous</li>
+            </ul>
+
+            <p><strong>Estimated time:</strong> 15-20 minutes</p>
+
+            <p class="consent-text"><strong>By continuing, you consent to participate in this research study.</strong></p>
+
+            <div class="button-group">
+                <button id="btn-to-participant" class="btn btn-primary">Continue</button>
+            </div>
+        </div>
+
+        <!-- Participant Info Screen -->
+        <div id="screen-participant" class="screen">
+            <h1>Participant Information</h1>
+
+            <div class="input-group">
+                <label for="participant-id">Participant ID (auto-generated)</label>
+                <input type="text" id="participant-id" placeholder="Auto-generating..." readonly style="background-color: #f0f0f0;">
+                <small style="color: #666; font-size: 0.9em;">A random ID has been generated for you</small>
+            </div>
+
+            <div class="input-group">
+                <label for="age-range">Age Range *</label>
+                <select id="age-range" required>
+                    <option value="">Select age range</option>
+                    <option value="18-24">18-24</option>
+                    <option value="25-34">25-34</option>
+                    <option value="35-44">35-44</option>
+                    <option value="45-54">45-54</option>
+                    <option value="55-64">55-64</option>
+                    <option value="65+">65+</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="gender">Gender *</label>
+                <select id="gender" required>
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="non-binary">Non-binary</option>
+                    <option value="prefer-not-say">Prefer not to say</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="education">Highest obtained education level *</label>
+                <select id="education" required>
+                    <option value="">Select education level</option>
+                    <option value="high-school">High school or equivalent</option>
+                    <option value="some-college">Some college</option>
+                    <option value="bachelors">Bachelor's degree</option>
+                    <option value="masters">Master's degree</option>
+                    <option value="doctorate">Doctorate or professional degree</option>
+                    <option value="prefer-not-say">Prefer not to say</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button id="btn-back-welcome" class="btn btn-secondary">Back</button>
+                <button id="btn-start" class="btn btn-primary">Start Study</button>
+            </div>
+        </div>
+
+        <!-- Practice Screen -->
+        <div id="screen-practice" class="screen">
+            <h1>Practice Trials</h1>
+            <p class="instruction-text">Let's do a few practice comparisons to get familiar with the interface.</p>
+
+            <div class="comparison-container">
+                <div class="image-option practice-placeholder" id="practice-left" tabindex="0">
+                    <div class="placeholder-box placeholder-a">
+                        <span>Image A</span>
+                    </div>
+                </div>
+                <div class="image-option practice-placeholder" id="practice-right" tabindex="0">
+                    <div class="placeholder-box placeholder-b">
+                        <span>Image B</span>
+                    </div>
+                </div>
+            </div>
+
+            <p id="practice-selection-feedback" class="selection-feedback hidden">Selected! Loading next...</p>
+        </div>
+
+        <!-- Transition Screen -->
+        <div id="screen-transition" class="screen">
+            <h1>Practice Complete!</h1>
+            <p>Great job! You're now ready for the main study.</p>
+            <div class="button-group">
+                <button id="btn-start-main" class="btn btn-primary">Begin Main Study</button>
+            </div>
+        </div>
+
+        <!-- Main Study Screen -->
+        <div id="screen-main" class="screen">
+            <div class="comparison-container">
+                <div class="image-option" id="main-left" tabindex="0">
+                    <img src="" alt="Left artwork">
+                </div>
+                <div class="image-option" id="main-right" tabindex="0">
+                    <img src="" alt="Right artwork">
+                </div>
+            </div>
+
+            <p id="selection-feedback" class="selection-feedback hidden">Image selected, loading next pair...</p>
+        </div>
+
+        <!-- Loading Screen -->
+        <div id="screen-loading" class="screen">
+            <h1>Finding Your Perfect Art...</h1>
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Analyzing your preferences...</p>
+        </div>
+
+        <!-- Manual Selection Screen -->
+        <div id="screen-manual-select" class="screen">
+            <h1>Choose your top five favorite from this list</h1>
+
+            <div class="recommendations-grid" id="manual-recommendations-grid">
+                <!-- Recommendations will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Final Result Screen -->
+        <div id="screen-result" class="screen">
+            <h1>Your Pick</h1>
+            <div class="final-artwork">
+                <img id="final-artwork-img" src="" alt="Your recommended artwork">
+            </div>
+
+            <div class="artwork-details" id="artwork-details">
+                <!-- Details will be inserted here -->
+            </div>
+
+            <div class="rating-section">
+                <h3>Do you think the artworks that the system recommends correspond to your art interests?</h3>
+                <div class="scale-options">
+                    <div class="scale-option">
+                        <input type="radio" name="final-rating" value="1" id="rating1" required>
+                        <label for="rating1">1</label>
+                    </div>
+                    <div class="scale-option">
+                        <input type="radio" name="final-rating" value="2" id="rating2">
+                        <label for="rating2">2</label>
+                    </div>
+                    <div class="scale-option">
+                        <input type="radio" name="final-rating" value="3" id="rating3">
+                        <label for="rating3">3</label>
+                    </div>
+                    <div class="scale-option">
+                        <input type="radio" name="final-rating" value="4" id="rating4">
+                        <label for="rating4">4</label>
+                    </div>
+                    <div class="scale-option">
+                        <input type="radio" name="final-rating" value="5" id="rating5">
+                        <label for="rating5">5</label>
+                    </div>
+                    <div class="scale-option">
+                        <input type="radio" name="final-rating" value="6" id="rating6">
+                        <label for="rating6">6</label>
+                    </div>
+                    <div class="scale-option">
+                        <input type="radio" name="final-rating" value="7" id="rating7">
+                        <label for="rating7">7</label>
+                    </div>
+                </div>
+                <div class="scale-labels">
+                    <span>Strongly Disagree</span>
+                    <span>Neutral</span>
+                    <span>Strongly Agree</span>
+                </div>
+                <div class="button-group">
+                    <button id="btn-submit-rating" class="btn btn-primary">Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Propensity to Trust Questionnaire -->
+        <div id="screen-trust-survey" class="screen">
+            <h1>Questionnaire 1</h1>
+
+            <form id="trust-survey-form">
+                <div id="trust-questions-container">
+                    <!-- Questions will be inserted here by JavaScript (randomized) -->
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Continue</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ATI Questionnaire -->
+        <div id="screen-ati-survey" class="screen">
+            <h1>Questionnaire 2</h1>
+
+            <form id="ati-survey-form">
+                <div id="ati-questions-container">
+                    <!-- Questions will be inserted here by JavaScript (randomized) -->
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Continue</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Thank You Screen -->
+        <div id="screen-complete" class="screen">
+            <h1>Thank You!</h1>
+            <div class="success-box">
+                <strong>Study Complete!</strong> Your responses have been saved successfully.
+            </div>
+
+            <h2>Debrief</h2>
+            <p>This study investigates how people form and express their aesthetic preferences through artwork comparisons.</p>
+
+            <p><strong>Key aspects we're studying:</strong></p>
+            <ul>
+                <li>How preferences are expressed through pairwise choices</li>
+                <li>How well recommendation systems can predict your preferences</li>
+                <li>Individual differences in aesthetic preference patterns</li>
+            </ul>
+
+            <p class="session-info">Your data has been saved to session: <span id="final-session-id"></span></p>
+
+            <p class="closing-text">You may now close this window.</p>
+
+            <div class="button-group">
+                <button id="btn-restart" class="btn btn-secondary">Start New Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Survey Modal -->
+    <div id="survey-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="font-size: 1.2em; margin-bottom: 10px;">Quick Check-In</h3>
+            <p style="margin-bottom: 20px; color: #333; font-size: 1.1em;">Based on the images shown in <strong>the last 10 trials</strong>...</p>
+            <form id="survey-form">
+                <div class="survey-question">
+                    <label>1. How certain are you about your art preferences after viewing these images?</label>
+                    <div class="scale-options">
+                        <div class="scale-option">
+                            <input type="radio" name="certainty" value="1" id="cert1" required>
+                            <label for="cert1">1</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="certainty" value="2" id="cert2">
+                            <label for="cert2">2</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="certainty" value="3" id="cert3">
+                            <label for="cert3">3</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="certainty" value="4" id="cert4">
+                            <label for="cert4">4</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="certainty" value="5" id="cert5">
+                            <label for="cert5">5</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="certainty" value="6" id="cert6">
+                            <label for="cert6">6</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="certainty" value="7" id="cert7">
+                            <label for="cert7">7</label>
+                        </div>
+                    </div>
+                    <div class="scale-labels">
+                        <span>Very Uncertain</span>
+                        <span>Very Certain</span>
+                    </div>
+                </div>
+
+                <div class="survey-question">
+                    <label>2. How confident are you that the algorithm is learning your preferences well?</label>
+                    <div class="scale-options">
+                        <div class="scale-option">
+                            <input type="radio" name="know-prefs" value="1" id="algo1" required>
+                            <label for="algo1">1</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="know-prefs" value="2" id="algo2">
+                            <label for="algo2">2</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="know-prefs" value="3" id="algo3">
+                            <label for="algo3">3</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="know-prefs" value="4" id="algo4">
+                            <label for="algo4">4</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="know-prefs" value="5" id="algo5">
+                            <label for="algo5">5</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="know-prefs" value="6" id="algo6">
+                            <label for="algo6">6</label>
+                        </div>
+                        <div class="scale-option">
+                            <input type="radio" name="know-prefs" value="7" id="algo7">
+                            <label for="algo7">7</label>
+                        </div>
+                    </div>
+                    <div class="scale-labels">
+                        <span>Not Confident</span>
+                        <span>Very Confident</span>
+                    </div>
+                </div>
+
+                <div class="survey-question">
+                    <label>3. What features influenced your choice between images? Be specific.</label>
+                    <textarea name="strategy" id="strategy" required></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Continue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

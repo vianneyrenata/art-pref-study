@@ -1,0 +1,39 @@
+{
+  "experiment": {
+    "n_practice_trials": 3,
+    "n_main_trials": 110,
+    "survey_interval": 10
+  },
+
+  "algorithms": {
+    "pair_selector": "random",
+    "recommender": "embedding",
+    "bald": {
+      "pca_dimensions": 10,
+      "track_uncertainty": true
+    }
+  },
+
+  "recommendations": {
+    "manual_show_n": 10,
+    "manual_select_n": 5
+  },
+
+  "paths": {
+    "db_path": "./data/pilot-400-db",
+    "collection_name": "pilot-400",
+    "images_base_path": "./data/pilot-400",
+    "data_exports_path": "./data_exports"
+  },
+
+  "_comments": {
+    "pair_selector_options": ["random", "bald"],
+    "recommender_options": ["embedding", "utility"],
+    "survey_interval": "Show survey every N main comparisons (0 to disable mid-surveys)",
+    "manual_show_n": "Number of options shown for manual selection",
+    "manual_select_n": "Number user can select from manual options",
+    "pca_dimensions": "PCA dimensions for GPPL embeddings",
+    "track_uncertainty": "Save per-item uncertainty history for visualization",
+    "NOTE": "Random algorithm: 3 practice (UI only) + 110 main (all random)"
+  }
+}
