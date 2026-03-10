@@ -1,7 +1,9 @@
-# Large data files (not suitable for git)
-data/pilot-400-db/
-data/pilot-400/
+# Generated data only
 data_exports/
+
+# Temporary/build files
+*.tar.gz
+*.zip
 
 # Python
 __pycache__/
