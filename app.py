@@ -668,6 +668,39 @@ def save_ati_survey():
     return jsonify({'success': True})
 
 
+@app.route('/api/save_prolific_id', methods=['POST'])
+def save_prolific_id():
+    """Save Prolific ID mapping to session ID."""
+    data = request.json
+    session_id = data.get('session_id')
+    prolific_id = data.get('prolific_id', '').strip()
+
+    if session_id not in sessions:
+        return jsonify({'error': 'Invalid session'}), 400
+
+    if not prolific_id:
+        return jsonify({'error': 'Prolific ID is required'}), 400
+
+    # Save to global prolific mapping file
+    mapping_path = Path('data_exports') / 'prolific_mapping.csv'
+    file_exists = mapping_path.exists()
+
+    with open(mapping_path, 'a', newline='') as f:
+        fieldnames = ['session_id', 'prolific_id', 'timestamp']
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+
+        if not file_exists:
+            writer.writeheader()
+
+        writer.writerow({
+            'session_id': session_id,
+            'prolific_id': prolific_id,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    return jsonify({'success': True})
+
+
 @app.route('/api/submit_timing_stats', methods=['POST'])
 def submit_timing_stats():
     """Receive and log pair loading time statistics."""

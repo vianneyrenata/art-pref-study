@@ -123,6 +123,9 @@ class ArtPreferenceStudy {
 
         // ATI survey form
         document.getElementById('ati-survey-form').addEventListener('submit', (e) => this.submitATISurvey(e));
+
+        // Prolific ID form
+        document.getElementById('prolific-form').addEventListener('submit', (e) => this.submitProlificId(e));
     }
 
     setupKeyboardShortcuts() {
@@ -871,10 +874,39 @@ class ArtPreferenceStudy {
                 })
             });
 
+            // Show Prolific ID screen
+            this.showScreen('prolific');
+        } catch (error) {
+            console.error('Error saving ATI survey:', error);
+            this.showScreen('prolific');
+        }
+    }
+
+    async submitProlificId(e) {
+        e.preventDefault();
+
+        const prolificId = document.getElementById('prolific-id').value.trim();
+
+        if (!prolificId) {
+            alert('Please enter your Prolific ID to complete the study.');
+            return;
+        }
+
+        try {
+            await fetch('/api/save_prolific_id', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    prolific_id: prolificId
+                })
+            });
+
             // Now show complete screen
             this.showComplete();
         } catch (error) {
-            console.error('Error saving ATI survey:', error);
+            console.error('Error saving Prolific ID:', error);
+            // Still show complete screen even if saving fails
             this.showComplete();
         }
     }
