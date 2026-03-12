@@ -780,6 +780,85 @@ def submit_timing_stats():
     return jsonify({'success': True})
 
 
+@app.route('/api/get_utility_viz', methods=['POST'])
+def get_utility_viz():
+    """Get utility visualization data for real-time tracking during study."""
+    data = request.json
+    session_id = data.get('session_id')
+
+    if session_id not in sessions:
+        return jsonify({'error': 'Invalid session'}), 400
+
+    session = sessions[session_id]
+
+    # Only provide data if using BALD algorithm
+    if not session.get('use_bald', False):
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+    selector = session['selector']
+
+    # Check if we have enough data (after burn-in)
+    if not hasattr(selector, 'get_utilities') or len(selector.comparisons) < 3:
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+    try:
+        # Get current utilities and top image
+        utilities = selector.get_utilities()
+        image_ids = session['image_ids']
+
+        # Get top image
+        top_idx = np.argmax(utilities)
+        top_image_id = image_ids[top_idx]
+        top_image_path = f"/images/{top_image_id}"
+
+        # Build timeline from tracking data
+        timeline = []
+        if hasattr(selector, 'tracking_data'):
+            tracking = selector.tracking_data
+            utilities_history = tracking.get('utilities_per_iteration', [])
+
+            prev_top_idx = None
+            for i, utils in enumerate(utilities_history):
+                if len(utils) > 0:
+                    max_util = float(np.max(utils))
+                    mean_util = float(np.mean(utils))
+                    current_top_idx = int(np.argmax(utils))
+
+                    top_changed = (prev_top_idx is not None and
+                                 current_top_idx != prev_top_idx)
+
+                    timeline.append({
+                        'max_utility': max_util,
+                        'mean_utility': mean_util,
+                        'top_changed': top_changed
+                    })
+
+                    prev_top_idx = current_top_idx
+
+        return jsonify({
+            'success': True,
+            'has_data': True,
+            'timeline': timeline,
+            'top_image': {
+                'id': top_image_id,
+                'path': top_image_path
+            }
+        })
+
+    except Exception as e:
+        print(f"Error generating utility viz: {e}")
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+
 if __name__ == '__main__':
     # Ensure data exports directory exists
     Path(CONFIG['DATA_EXPORTS_PATH']).mkdir(parents=True, exist_ok=True)
