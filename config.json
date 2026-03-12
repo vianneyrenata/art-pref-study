@@ -1,7 +1,7 @@
 {
   "experiment": {
     "n_practice_trials": 3,
-    "n_main_trials": 110,
+    "n_main_trials": 80,
     "survey_interval": 10
   },
 
@@ -34,6 +34,6 @@
     "manual_select_n": "Number user can select from manual options",
     "pca_dimensions": "PCA dimensions for GPPL embeddings",
     "track_uncertainty": "Save per-item uncertainty history for visualization",
-    "NOTE": "BALD algorithm: 3 practice (UI only, not recorded) + 110 main (10 burn-in + 100 BALD acquisition)"
+    "NOTE": "BALD algorithm: 3 practice (UI only, not recorded) + 80 main (10 burn-in + 70 BALD acquisition)"
   }
 }
