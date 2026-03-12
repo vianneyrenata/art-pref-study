@@ -854,7 +854,7 @@ class ArtPreferenceStudy {
     }
 
     checkRankingComplete() {
-        const numSlots = document.querySelectorAll('.drop-zone').length;
+        const numSlots = document.querySelectorAll('#screen-ranking .drop-zone').length;
         const numRanked = Object.keys(this.currentRanking).length;
 
         const continueBtn = document.getElementById('btn-submit-ranking');
