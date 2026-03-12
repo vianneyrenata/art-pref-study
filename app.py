@@ -802,24 +802,26 @@ def get_utility_viz():
 
     # Check if we have enough data (after burn-in)
     # BALD requires at least 10 comparisons before GPPL model is fitted
-    if not hasattr(selector, 'get_utilities') or len(selector.comparisons) < 10:
+    if len(selector.comparisons) < 10:
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+    # Check if model has been fitted
+    if not hasattr(selector, 'model') or selector.model is None:
         return jsonify({
             'success': True,
             'has_data': False
         })
 
     try:
-        # Get current utilities and top image
-        utilities = selector.get_utilities()
         image_ids = session['image_ids']
 
-        # Get top image
-        top_idx = np.argmax(utilities)
-        top_image_id = image_ids[top_idx]
-        top_image_path = f"/images/{top_image_id}"
-
-        # Build timeline from tracking data
+        # Build timeline from tracking data and get top from latest iteration
         timeline = []
+        latest_top_idx = None
+
         if hasattr(selector, 'tracking_data'):
             tracking = selector.tracking_data
             utilities_history = tracking.get('utilities_per_iteration', [])
@@ -829,10 +831,10 @@ def get_utility_viz():
                 if len(utils) > 0:
                     max_util = float(np.max(utils))
                     mean_util = float(np.mean(utils))
-                    current_top_idx = int(np.argmax(utils))
+                    iter_top_idx = int(np.argmax(utils))
 
                     top_changed = (prev_top_idx is not None and
-                                 current_top_idx != prev_top_idx)
+                                 iter_top_idx != prev_top_idx)
 
                     timeline.append({
                         'max_utility': max_util,
@@ -840,7 +842,18 @@ def get_utility_viz():
                         'top_changed': top_changed
                     })
 
-                    prev_top_idx = current_top_idx
+                    prev_top_idx = iter_top_idx
+                    latest_top_idx = iter_top_idx  # Use top from this iteration
+
+        # Fallback to get_utilities if no tracking data
+        if latest_top_idx is None:
+            utilities = selector.get_utilities()
+            if utilities is None or len(utilities) == 0:
+                return jsonify({'success': True, 'has_data': False})
+            latest_top_idx = int(np.argmax(utilities))
+
+        top_image_id = image_ids[latest_top_idx]
+        top_image_path = f"/images/{top_image_id}"
 
         return jsonify({
             'success': True,
