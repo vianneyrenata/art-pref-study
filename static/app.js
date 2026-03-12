@@ -20,6 +20,11 @@ class ArtPreferenceStudy {
         this.isProcessing = false; // Prevent double-clicks
         this.practiceColorIndex = 0; // Track which color pair to show
 
+        // Ranking state
+        this.rankingStartTime = null;
+        this.rankingMovements = [];
+        this.currentRanking = {}; // position -> image_id mapping
+
         // Timing tracking for pair loading performance
         this.pairLoadingTimes = []; // Array to store loading times in ms
         this.selectionTimestamp = null; // When user made selection
@@ -126,6 +131,9 @@ class ArtPreferenceStudy {
 
         // Prolific ID form
         document.getElementById('prolific-form').addEventListener('submit', (e) => this.submitProlificId(e));
+
+        // Ranking submit button
+        document.getElementById('btn-submit-ranking').addEventListener('click', () => this.submitRanking());
     }
 
     setupKeyboardShortcuts() {
@@ -626,9 +634,255 @@ class ArtPreferenceStudy {
     }
 
     confirmManualSelection() {
-        if (this.selectedRecommendations.length > 0) {
-            this.showFinalResult();
+        if (this.selectedRecommendations.length === 0) return;
+
+        // Only show ranking if multiple items selected
+        if (this.recommendationConfig.manual_select_n > 1) {
+            this.showRanking();
+        } else {
+            this.showFinalResult(); // Single-select bypasses ranking
         }
+    }
+
+    showRanking() {
+        this.showScreen('ranking');
+        this.rankingStartTime = Date.now();
+        this.rankingMovements = [];
+        this.currentRanking = {};
+
+        // Populate source area with selected images
+        const sourceContainer = document.getElementById('ranking-source-images');
+        sourceContainer.innerHTML = '';
+
+        this.selectedRecommendations.forEach((rec, i) => {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'ranking-image';
+            imgDiv.draggable = true;
+            imgDiv.dataset.imageId = rec.image_id;
+            imgDiv.innerHTML = `<img src="${rec.path}" alt="Artwork ${i + 1}">`;
+            sourceContainer.appendChild(imgDiv);
+        });
+
+        // Set up drag and drop event listeners
+        this.setupRankingDragAndDrop();
+
+        // Ensure continue button is disabled initially
+        document.getElementById('btn-submit-ranking').disabled = true;
+    }
+
+    setupRankingDragAndDrop() {
+        // Get all draggable images
+        const images = document.querySelectorAll('.ranking-image');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const sourceArea = document.getElementById('ranking-source-images');
+
+        // Set up drag events for images
+        images.forEach(img => {
+            img.addEventListener('dragstart', (e) => this.handleRankingDragStart(e));
+            img.addEventListener('dragend', (e) => this.handleRankingDragEnd(e));
+        });
+
+        // Set up drop zones
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => this.handleRankingDragOver(e));
+            zone.addEventListener('dragleave', (e) => this.handleRankingDragLeave(e));
+            zone.addEventListener('drop', (e) => this.handleRankingDrop(e));
+        });
+
+        // Set up source area as drop zone for unranking
+        sourceArea.addEventListener('dragover', (e) => this.handleRankingDragOver(e));
+        sourceArea.addEventListener('drop', (e) => this.handleRankingDropToSource(e));
+    }
+
+    handleRankingDragStart(e) {
+        const imgDiv = e.target.closest('.ranking-image');
+        imgDiv.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', imgDiv.innerHTML);
+        e.dataTransfer.setData('image-id', imgDiv.dataset.imageId);
+    }
+
+    handleRankingDragEnd(e) {
+        const imgDiv = e.target.closest('.ranking-image');
+        imgDiv.classList.remove('dragging');
+    }
+
+    handleRankingDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+
+        const dropZone = e.target.closest('.drop-zone');
+        if (dropZone) {
+            dropZone.classList.add('drag-over');
+        }
+    }
+
+    handleRankingDragLeave(e) {
+        const dropZone = e.target.closest('.drop-zone');
+        if (dropZone) {
+            dropZone.classList.remove('drag-over');
+        }
+    }
+
+    handleRankingDrop(e) {
+        e.preventDefault();
+        const dropZone = e.target.closest('.drop-zone');
+        if (!dropZone) return;
+
+        dropZone.classList.remove('drag-over');
+
+        const imageId = e.dataTransfer.getData('image-id');
+        const position = parseInt(dropZone.dataset.position);
+
+        // Find the dragged image element
+        const draggedImg = document.querySelector(`.ranking-image[data-image-id="${imageId}"]`);
+        if (!draggedImg) return;
+
+        // Check if this slot already has an image
+        const existingImg = dropZone.querySelector('.ranking-image');
+        const sourceArea = document.getElementById('ranking-source-images');
+
+        if (existingImg) {
+            // Swap: return existing image to source
+            const existingId = existingImg.dataset.imageId;
+            sourceArea.appendChild(existingImg);
+
+            // Remove old position from ranking
+            for (let pos in this.currentRanking) {
+                if (this.currentRanking[pos] === existingId) {
+                    delete this.currentRanking[pos];
+                    break;
+                }
+            }
+
+            // Record swap movement
+            this.rankingMovements.push({
+                timestamp: Date.now() - this.rankingStartTime,
+                image_id: existingId,
+                action: 'swap_out',
+                position: position,
+                to: 'source'
+            });
+        }
+
+        // Place dragged image in slot
+        dropZone.appendChild(draggedImg);
+        dropZone.classList.add('filled');
+
+        // Update ranking
+        const oldPosition = Object.keys(this.currentRanking).find(
+            pos => this.currentRanking[pos] === imageId
+        );
+
+        if (oldPosition) {
+            delete this.currentRanking[oldPosition];
+        }
+
+        this.currentRanking[position] = imageId;
+
+        // Record movement
+        this.rankingMovements.push({
+            timestamp: Date.now() - this.rankingStartTime,
+            image_id: imageId,
+            action: 'place',
+            position: position,
+            from: oldPosition ? parseInt(oldPosition) : 'source'
+        });
+
+        // Check if all slots are filled
+        this.checkRankingComplete();
+    }
+
+    handleRankingDropToSource(e) {
+        e.preventDefault();
+        const imageId = e.dataTransfer.getData('image-id');
+        const draggedImg = document.querySelector(`.ranking-image[data-image-id="${imageId}"]`);
+        if (!draggedImg) return;
+
+        const sourceArea = document.getElementById('ranking-source-images');
+
+        // Find which position this image was in
+        const oldPosition = Object.keys(this.currentRanking).find(
+            pos => this.currentRanking[pos] === imageId
+        );
+
+        if (oldPosition) {
+            // Remove from ranking
+            delete this.currentRanking[oldPosition];
+
+            // Clear the drop zone
+            const dropZone = document.querySelector(`.drop-zone[data-position="${oldPosition}"]`);
+            if (dropZone) {
+                dropZone.classList.remove('filled');
+            }
+
+            // Record movement
+            this.rankingMovements.push({
+                timestamp: Date.now() - this.rankingStartTime,
+                image_id: imageId,
+                action: 'unrank',
+                position: null,
+                from: parseInt(oldPosition)
+            });
+        }
+
+        // Return to source
+        sourceArea.appendChild(draggedImg);
+
+        // Check completion status
+        this.checkRankingComplete();
+    }
+
+    checkRankingComplete() {
+        const numSlots = document.querySelectorAll('.drop-zone').length;
+        const numRanked = Object.keys(this.currentRanking).length;
+
+        const continueBtn = document.getElementById('btn-submit-ranking');
+        continueBtn.disabled = numRanked !== numSlots;
+    }
+
+    async submitRanking() {
+        const rankingTimeMs = Date.now() - this.rankingStartTime;
+
+        // Build final ranking array [1st, 2nd, 3rd, 4th, 5th]
+        const finalRanking = [];
+        for (let i = 1; i <= 5; i++) {
+            if (this.currentRanking[i]) {
+                finalRanking.push(this.currentRanking[i]);
+            }
+        }
+
+        const rankingData = {
+            final_ranking: finalRanking,
+            ranking_time_ms: rankingTimeMs,
+            num_movements: this.rankingMovements.length,
+            movements: this.rankingMovements
+        };
+
+        // Save to backend
+        try {
+            await fetch('/api/submit_ranking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    ranking_data: rankingData
+                })
+            });
+        } catch (error) {
+            console.error('Error submitting ranking:', error);
+            // Continue anyway - don't block user
+        }
+
+        // Reorder selectedRecommendations to match ranking
+        const reordered = finalRanking.map(imageId =>
+            this.selectedRecommendations.find(rec => rec.image_id === imageId)
+        ).filter(rec => rec !== undefined);
+
+        this.selectedRecommendations = reordered;
+
+        // Show final result
+        this.showFinalResult();
     }
 
     showFinalResult() {
@@ -796,11 +1050,11 @@ class ArtPreferenceStudy {
                 })
             });
 
-            // Show ATI survey
-            this.showATISurvey();
+            // Skip ATI survey, go directly to Prolific screen
+            this.showScreen('prolific');
         } catch (error) {
             console.error('Error saving trust survey:', error);
-            this.showATISurvey();
+            this.showScreen('prolific');
         }
     }
 

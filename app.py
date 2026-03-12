@@ -690,6 +690,29 @@ def save_ati_survey():
     return jsonify({'success': True})
 
 
+@app.route('/api/submit_ranking', methods=['POST'])
+def submit_ranking():
+    """Save ranking data from drag-and-drop ranking interface."""
+    data = request.json
+    session_id = data.get('session_id')
+
+    if session_id not in sessions:
+        return jsonify({'error': 'Invalid session'}), 400
+
+    session = sessions[session_id]
+    export_path = Path(session['export_path'])
+
+    # Add timestamp to ranking data
+    ranking_data = data.get('ranking_data', {})
+    ranking_data['timestamp'] = datetime.now().isoformat()
+
+    # Save to ranking_data.json
+    with open(export_path / 'ranking_data.json', 'w') as f:
+        json.dump(ranking_data, f, indent=2)
+
+    return jsonify({'success': True})
+
+
 @app.route('/api/save_prolific_id', methods=['POST'])
 def save_prolific_id():
     """Save Prolific ID mapping to session ID."""
