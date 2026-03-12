@@ -800,13 +800,22 @@ def get_utility_viz():
 
     selector = session['selector']
 
+    print(f"\n=== GET UTILITY VIZ CALLED ===")
+    print(f"Session: {session_id}")
+    print(f"Use BALD: {session.get('use_bald', False)}")
+    print(f"Comparisons: {len(selector.comparisons)}")
+    print(f"Has get_utilities: {hasattr(selector, 'get_utilities')}")
+
     # Check if we have enough data (after burn-in)
     # BALD requires at least 10 comparisons before GPPL model is fitted
     if not hasattr(selector, 'get_utilities') or len(selector.comparisons) < 10:
+        print(f"  -> Not enough data yet (need 10+ comparisons)")
         return jsonify({
             'success': True,
             'has_data': False
         })
+
+    print(f"  -> Attempting to get utilities...")
 
     try:
         # Get current utilities and top image
@@ -861,10 +870,13 @@ def get_utility_viz():
         })
 
     except Exception as e:
-        print(f"Error generating utility viz: {e}")
+        print(f"ERROR generating utility viz: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': True,
-            'has_data': False
+            'has_data': False,
+            'error': str(e)
         })
 
 
