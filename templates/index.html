@@ -327,20 +327,6 @@
         </div>
 
         <!-- ATI Questionnaire -->
-        <div id="screen-ati-survey" class="screen">
-            <h1>Questionnaire 2</h1>
-
-            <form id="ati-survey-form">
-                <div id="ati-questions-container">
-                    <!-- Questions will be inserted here by JavaScript (randomized) -->
-                </div>
-
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Continue</button>
-                </div>
-            </form>
-        </div>
-
         <!-- Prolific ID Screen -->
         <div id="screen-prolific" class="screen">
             <h1>Almost Done!</h1>
@@ -469,16 +455,14 @@
                 </div>
 
                 <div class="survey-question">
-                    <label>3. What features influenced your choice between images? Be specific.</label>
-
-                    <div style="margin-top: 10px;">
-                        <label for="features-like" style="font-weight: 600; display: block; margin-bottom: 5px;">Like:</label>
-                        <textarea name="features-like" id="features-like" required style="margin-bottom: 15px;"></textarea>
+                    <label>3. What characteristics of the artworks influenced your choice between images? Be specific.</label>
+                    <div class="input-with-label" style="display: flex; align-items: flex-start; margin-bottom: 10px;">
+                        <span style="min-width: 80px; padding-top: 8px; font-weight: 500;">Like:</span>
+                        <textarea name="strategy-like" id="strategy-like" required style="flex: 1;"></textarea>
                     </div>
-
-                    <div>
-                        <label for="features-dislike" style="font-weight: 600; display: block; margin-bottom: 5px;">Dislike:</label>
-                        <textarea name="features-dislike" id="features-dislike" required></textarea>
+                    <div class="input-with-label" style="display: flex; align-items: flex-start;">
+                        <span style="min-width: 80px; padding-top: 8px; font-weight: 500;">Dislike:</span>
+                        <textarea name="strategy-dislike" id="strategy-dislike" required style="flex: 1;"></textarea>
                     </div>
                 </div>
 
