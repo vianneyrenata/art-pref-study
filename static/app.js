@@ -170,11 +170,10 @@ class ArtPreferenceStudy {
         const ageRange = document.getElementById('age-range').value;
         const gender = document.getElementById('gender').value;
         const museumVisits = document.getElementById('museum-visits').value;
-        const education = document.getElementById('education').value;
 
         // Validate required fields
-        if (!ageRange || !gender || !museumVisits || !education) {
-            alert('Please fill in all required fields (age range, gender, museum visits, and education level).');
+        if (!ageRange || !gender || !museumVisits) {
+            alert('Please fill in all required fields (age range, gender, and museum visits).');
             return;
         }
 
@@ -191,8 +190,7 @@ class ArtPreferenceStudy {
                     demographics: {
                         age_range: ageRange,
                         gender: gender,
-                        museum_visits: museumVisits,
-                        education: education
+                        museum_visits: museumVisits
                     },
                     study: studyCode  // Pass study code to backend
                 })
@@ -1474,7 +1472,6 @@ class ArtPreferenceStudy {
         document.getElementById('age-range').value = '';
         document.getElementById('gender').value = '';
         document.getElementById('museum-visits').value = '';
-        document.getElementById('education').value = '';
 
         // Reset survey forms
         document.getElementById('trust-survey-form').reset();
