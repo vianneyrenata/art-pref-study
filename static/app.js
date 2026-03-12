@@ -1272,8 +1272,6 @@ class ArtPreferenceStudy {
 
             const data = await response.json();
             if (data.success && data.has_data) {
-                console.log('📊 Utility viz data received:', data);
-                console.log('🖼️  Top image:', data.top_image);
                 this.utilityVizData = data;
                 this.renderUtilityViz();
             } else {
@@ -1295,9 +1293,6 @@ class ArtPreferenceStudy {
 
         // Update thumbnail
         if (this.utilityVizData.top_image && this.utilityVizData.top_image.path) {
-            console.log('🔄 Updating thumbnail:');
-            console.log('   From:', thumb.src);
-            console.log('   To:', this.utilityVizData.top_image.path);
             thumb.src = this.utilityVizData.top_image.path;
         }
 

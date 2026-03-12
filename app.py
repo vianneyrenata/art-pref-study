@@ -800,22 +800,13 @@ def get_utility_viz():
 
     selector = session['selector']
 
-    print(f"\n=== GET UTILITY VIZ CALLED ===")
-    print(f"Session: {session_id}")
-    print(f"Use BALD: {session.get('use_bald', False)}")
-    print(f"Comparisons: {len(selector.comparisons)}")
-    print(f"Has get_utilities: {hasattr(selector, 'get_utilities')}")
-
     # Check if we have enough data (after burn-in)
     # BALD requires at least 10 comparisons before GPPL model is fitted
     if not hasattr(selector, 'get_utilities') or len(selector.comparisons) < 10:
-        print(f"  -> Not enough data yet (need 10+ comparisons)")
         return jsonify({
             'success': True,
             'has_data': False
         })
-
-    print(f"  -> Attempting to get utilities...")
 
     try:
         # Get current utilities and top image
@@ -826,14 +817,6 @@ def get_utility_viz():
         top_idx = np.argmax(utilities)
         top_image_id = image_ids[top_idx]
         top_image_path = f"/images/{top_image_id}"
-
-        # Debug logging
-        print(f"\n=== UTILITY VIZ DEBUG ===")
-        print(f"Comparisons: {len(selector.comparisons)}")
-        print(f"Utility range: [{np.min(utilities):.4f}, {np.max(utilities):.4f}]")
-        print(f"Utility std: {np.std(utilities):.4f}")
-        print(f"Top image: {top_image_id}")
-        print(f"Top 5 utilities: {sorted(utilities, reverse=True)[:5]}")
 
         # Build timeline from tracking data
         timeline = []
@@ -870,13 +853,10 @@ def get_utility_viz():
         })
 
     except Exception as e:
-        print(f"ERROR generating utility viz: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error generating utility viz: {e}")
         return jsonify({
             'success': True,
-            'has_data': False,
-            'error': str(e)
+            'has_data': False
         })
 
 
