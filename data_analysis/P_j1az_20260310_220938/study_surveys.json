@@ -1,0 +1,12 @@
+{
+  "demographics": {
+    "age_range": "35-44",
+    "gender": "female",
+    "education": "bachelors"
+  },
+  "trust": null,
+  "ati": null,
+  "timestamps": {
+    "demographics_collected": "2026-03-10T22:09:38.221947"
+  }
+}

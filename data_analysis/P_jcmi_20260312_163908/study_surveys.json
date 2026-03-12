@@ -1,0 +1,31 @@
+{
+  "demographics": {
+    "age_range": "55-64",
+    "gender": "male",
+    "education": "doctorate"
+  },
+  "trust": {
+    "trust1": 4,
+    "trust2": 2,
+    "trust3": 4,
+    "trust4": 4,
+    "trust5": 4,
+    "trust6": 3
+  },
+  "ati": {
+    "ati1": 5,
+    "ati2": 5,
+    "ati3": 2,
+    "ati4": 5,
+    "ati5": 5,
+    "ati6": 4,
+    "ati7": 3,
+    "ati8": 2,
+    "ati9": 5
+  },
+  "timestamps": {
+    "demographics_collected": "2026-03-12T16:39:08.167013",
+    "trust_collected": "2026-03-12T18:18:09.215835",
+    "ati_collected": "2026-03-12T18:19:26.794202"
+  }
+}

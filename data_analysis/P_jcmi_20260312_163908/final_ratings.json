@@ -1,0 +1,82 @@
+{
+  "rating": 4,
+  "recommendation_type": "manual",
+  "selected_artwork": [
+    {
+      "image_id": "Post_Impressionism_anita-malfatti_paisagem-dos-pirineus-cauterets-1926",
+      "metadata": {
+        "artist": "anita malfatti",
+        "filename": "anita-malfatti_paisagem-dos-pirineus-cauterets-1926.jpg",
+        "relative_path": "Post_Impressionism/anita-malfatti_paisagem-dos-pirineus-cauterets-1926.jpg",
+        "style": "Post_Impressionism",
+        "title": "paisagem dos pirineus cauterets",
+        "year": "1926"
+      },
+      "path": "/images/Post_Impressionism_anita-malfatti_paisagem-dos-pirineus-cauterets-1926",
+      "rank": 1,
+      "score": 3.1145847059650063,
+      "uncertainty": 1.6032447628184645
+    },
+    {
+      "image_id": "Realism_ilya-mashkov_still-life-with-green-jug-and-the-pumpkin-1939",
+      "metadata": {
+        "artist": "ilya mashkov",
+        "filename": "ilya-mashkov_still-life-with-green-jug-and-the-pumpkin-1939.jpg",
+        "relative_path": "Realism/ilya-mashkov_still-life-with-green-jug-and-the-pumpkin-1939.jpg",
+        "style": "Realism",
+        "title": "still life with green jug and the pumpkin",
+        "year": "1939"
+      },
+      "path": "/images/Realism_ilya-mashkov_still-life-with-green-jug-and-the-pumpkin-1939",
+      "rank": 6,
+      "score": 2.1820018632539444,
+      "uncertainty": 1.5470499999679723
+    },
+    {
+      "image_id": "Realism_winslow-homer_two-girls-on-the-beach-tynemouth-1891",
+      "metadata": {
+        "artist": "winslow homer",
+        "filename": "winslow-homer_two-girls-on-the-beach-tynemouth-1891.jpg",
+        "relative_path": "Realism/winslow-homer_two-girls-on-the-beach-tynemouth-1891.jpg",
+        "style": "Realism",
+        "title": "two girls on the beach tynemouth",
+        "year": "1891"
+      },
+      "path": "/images/Realism_winslow-homer_two-girls-on-the-beach-tynemouth-1891",
+      "rank": 4,
+      "score": 2.944222863382446,
+      "uncertainty": 1.6395098981166063
+    },
+    {
+      "image_id": "Realism_isaac-levitan_gloomy-1899",
+      "metadata": {
+        "artist": "isaac levitan",
+        "filename": "isaac-levitan_gloomy-1899.jpg",
+        "relative_path": "Realism/isaac-levitan_gloomy-1899.jpg",
+        "style": "Realism",
+        "title": "gloomy",
+        "year": "1899"
+      },
+      "path": "/images/Realism_isaac-levitan_gloomy-1899",
+      "rank": 3,
+      "score": 3.0100894486552807,
+      "uncertainty": 1.8132113977882647
+    },
+    {
+      "image_id": "Realism_adolf-hitler_informal-dining-room-long-view",
+      "metadata": {
+        "artist": "adolf hitler",
+        "filename": "adolf-hitler_informal-dining-room-long-view.jpg",
+        "relative_path": "Realism/adolf-hitler_informal-dining-room-long-view.jpg",
+        "style": "Realism",
+        "title": "informal dining room long view",
+        "year": "Unknown"
+      },
+      "path": "/images/Realism_adolf-hitler_informal-dining-room-long-view",
+      "rank": 7,
+      "score": 0.7361560261076059,
+      "uncertainty": 1.7115263698783236
+    }
+  ],
+  "timestamp": "2026-03-12T18:17:36.254192"
+}

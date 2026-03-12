@@ -1,0 +1,18 @@
+{
+  "session_id": "P_j1az_20260310_220938",
+  "participant_id": "P_j1az",
+  "start_time": "2026-03-10T22:09:38.221773",
+  "assigned_algorithm": "bald",
+  "study_code": null,
+  "config": {
+    "n_practice": 3,
+    "n_main": 110,
+    "algorithm": "bald",
+    "recommender": "utility",
+    "survey_interval": 10,
+    "recommendations": {
+      "manual_show_n": 10,
+      "manual_select_n": 5
+    }
+  }
+}

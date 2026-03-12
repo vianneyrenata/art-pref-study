@@ -1,0 +1,14 @@
+phase,trial_number,image_1,image_2,chosen,chosen_side,onset_timestamp,decision_timestamp,response_time_ms
+practice,0,practice_a,practice_b,practice_a,right,2026-03-10T22:09:40.427Z,2026-03-10T22:09:41.509Z,1082
+practice,1,practice_a,practice_b,practice_a,right,2026-03-10T22:09:44.011Z,2026-03-10T22:09:44.883Z,872
+practice,2,practice_a,practice_b,practice_b,left,2026-03-10T22:09:47.385Z,2026-03-10T22:09:48.129Z,744
+main,0,Rococo_pietro-longhi_the-sleeping-woman,Realism_ivan-shishkin_river-backwater-in-the-forest-1890,Realism_ivan-shishkin_river-backwater-in-the-forest-1890,right,2026-03-10T22:09:54.314Z,2026-03-10T22:09:56.584Z,2270
+main,1,Cubism_fernand-leger_a-b-c-1927,Cubism_peter-busa_new-york-times-1945,Cubism_fernand-leger_a-b-c-1927,right,2026-03-10T22:09:59.275Z,2026-03-10T22:10:02.207Z,2932
+main,2,Cubism_fernand-leger_a-b-c-1927,Realism_gustave-courbet_landscape-near-puit-noir-near-ornans-1872,Cubism_fernand-leger_a-b-c-1927,left,2026-03-10T22:10:04.964Z,2026-03-10T22:10:06.483Z,1519
+main,3,Rococo_benjamin-west_the-hope-family-of-sydenham-kent-1802,Rococo_george-morland_morning-the-benevolent-sportsman-1792,Rococo_george-morland_morning-the-benevolent-sportsman-1792,left,2026-03-10T22:10:09.160Z,2026-03-10T22:10:10.253Z,1093
+main,4,Cubism_m.-h.-maxy_serenade-1934,Realism_albert-bierstadt_butterfly-1900,Realism_albert-bierstadt_butterfly-1900,right,2026-03-10T22:10:12.996Z,2026-03-10T22:10:14.371Z,1375
+main,5,Realism_giovanni-boldini_moving-to-the-bois-de-boulogene,Cubism_lyonel-feininger_gelmeroda-ix-1926,Cubism_lyonel-feininger_gelmeroda-ix-1926,right,2026-03-10T22:10:17.099Z,2026-03-10T22:10:18.985Z,1886
+main,6,Realism_boris-kustodiev_self-portrait-1904,Cubism_arthur-segal_die-br-cke-in-r-genwalderm-nde-1925,Cubism_arthur-segal_die-br-cke-in-r-genwalderm-nde-1925,right,2026-03-10T22:10:21.644Z,2026-03-10T22:10:22.680Z,1036
+main,7,Cubism_fernand-leger_the-hairy,Post_Impressionism_andre-derain_the-river-1912,Post_Impressionism_andre-derain_the-river-1912,left,2026-03-10T22:10:25.581Z,2026-03-10T22:10:27.400Z,1819
+main,8,Realism_pavel-fedotov_the-widow,Rococo_joshua-reynolds_the-dilettanti-society-1778,Rococo_joshua-reynolds_the-dilettanti-society-1778,right,2026-03-10T22:10:30.086Z,2026-03-10T22:10:31.807Z,1721
+main,9,Realism_aleksey-savrasov_marshy-river-1875,Rococo_joshua-reynolds_augustus-keppel-1783,Realism_aleksey-savrasov_marshy-river-1875,right,2026-03-10T22:10:34.550Z,2026-03-10T22:10:36.347Z,1797

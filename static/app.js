@@ -62,17 +62,6 @@ class ArtPreferenceStudy {
         ];
 
         // ATI items
-        this.atiItems = [
-            { id: 'ati1', text: 'I like to occupy myself in greater detail with technical systems.' },
-            { id: 'ati2', text: 'I like testing the functions of new technical systems.' },
-            { id: 'ati3', text: 'I predominantly deal with technical systems because I have to.', reverse: true },
-            { id: 'ati4', text: 'When I have a new technical system in front of me, I try it out intensively.' },
-            { id: 'ati5', text: 'I enjoy spending time becoming acquainted with a new technical system.' },
-            { id: 'ati6', text: 'It is enough for me that a technical system works; I don\'t care how or why.', reverse: true },
-            { id: 'ati7', text: 'I try to understand how a technical system exactly works.' },
-            { id: 'ati8', text: 'It is enough for me to know the basic functions of a technical system.', reverse: true },
-            { id: 'ati9', text: 'I try to make full use of the capabilities of a technical system.' }
-        ];
 
         this.init();
     }
@@ -136,7 +125,6 @@ class ArtPreferenceStudy {
         document.getElementById('trust-survey-form').addEventListener('submit', (e) => this.submitTrustSurvey(e));
 
         // ATI survey form
-        document.getElementById('ati-survey-form').addEventListener('submit', (e) => this.submitATISurvey(e));
 
         // Prolific ID form
         document.getElementById('prolific-form').addEventListener('submit', (e) => this.submitProlificId(e));
@@ -504,8 +492,8 @@ class ArtPreferenceStudy {
         const surveyData = {
             certainty: formData.get('certainty'),
             know_prefs: formData.get('know-prefs'),
-            features_like: formData.get('features-like') || '',
-            features_dislike: formData.get('features-dislike') || ''
+            strategy_like: formData.get('features-like') || '',
+            strategy_dislike: formData.get('features-dislike') || ''
         };
 
         try {
@@ -1295,88 +1283,7 @@ class ArtPreferenceStudy {
         }
     }
 
-    showATISurvey() {
-        this.showScreen('ati-survey');
 
-        // Randomize ATI items
-        const shuffledItems = this.shuffleArray(this.atiItems);
-        const container = document.getElementById('ati-questions-container');
-        container.innerHTML = '';
-
-        shuffledItems.forEach((item, index) => {
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'survey-question';
-
-            const questionHTML = `
-                <label>${index + 1}. ${item.text}</label>
-                <div class="scale-options">
-                    <div class="scale-option">
-                        <input type="radio" name="${item.id}" value="1" id="${item.id}-1" required>
-                        <label for="${item.id}-1">Completely disagree</label>
-                    </div>
-                    <div class="scale-option">
-                        <input type="radio" name="${item.id}" value="2" id="${item.id}-2">
-                        <label for="${item.id}-2">Largely disagree</label>
-                    </div>
-                    <div class="scale-option">
-                        <input type="radio" name="${item.id}" value="3" id="${item.id}-3">
-                        <label for="${item.id}-3">Slightly disagree</label>
-                    </div>
-                    <div class="scale-option">
-                        <input type="radio" name="${item.id}" value="4" id="${item.id}-4">
-                        <label for="${item.id}-4">Slightly agree</label>
-                    </div>
-                    <div class="scale-option">
-                        <input type="radio" name="${item.id}" value="5" id="${item.id}-5">
-                        <label for="${item.id}-5">Largely agree</label>
-                    </div>
-                    <div class="scale-option">
-                        <input type="radio" name="${item.id}" value="6" id="${item.id}-6">
-                        <label for="${item.id}-6">Completely agree</label>
-                    </div>
-                </div>
-            `;
-
-            questionDiv.innerHTML = questionHTML;
-            container.appendChild(questionDiv);
-        });
-    }
-
-    async submitATISurvey(e) {
-        e.preventDefault();
-
-        const formData = new FormData(e.target);
-        const atiData = {};
-        const unanswered = [];
-
-        this.atiItems.forEach((item, i) => {
-            const val = formData.get(item.id);
-            if (!val) { unanswered.push(i + 1); }
-            atiData[item.id] = parseInt(val);
-        });
-
-        if (unanswered.length > 0) {
-            alert(`Please answer all questions before continuing. Missing: question ${unanswered.join(', ')}.`);
-            return;
-        }
-
-        try {
-            await fetch('/api/save_ati_survey', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: this.sessionId,
-                    ati_data: atiData
-                })
-            });
-
-            // Show Prolific ID screen
-            this.showScreen('prolific');
-        } catch (error) {
-            console.error('Error saving ATI survey:', error);
-            this.showScreen('prolific');
-        }
-    }
 
     async submitProlificId(e) {
         e.preventDefault();
@@ -1475,7 +1382,6 @@ class ArtPreferenceStudy {
 
         // Reset survey forms
         document.getElementById('trust-survey-form').reset();
-        document.getElementById('ati-survey-form').reset();
 
         // Reset final artwork container for next session
         const finalArtwork = document.querySelector('.final-artwork');

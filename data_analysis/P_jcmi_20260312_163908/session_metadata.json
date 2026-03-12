@@ -1,0 +1,21 @@
+{
+  "session_id": "P_jcmi_20260312_163908",
+  "participant_id": "P_jcmi",
+  "start_time": "2026-03-12T16:39:08.166826",
+  "assigned_algorithm": "bald",
+  "study_code": null,
+  "config": {
+    "n_practice": 3,
+    "n_main": 110,
+    "algorithm": "bald",
+    "recommender": "utility",
+    "survey_interval": 10,
+    "recommendations": {
+      "manual_show_n": 10,
+      "manual_select_n": 5
+    }
+  },
+  "end_time": "2026-03-12T18:17:36.254054",
+  "algorithm_used": "bald",
+  "total_comparisons": 113
+}
