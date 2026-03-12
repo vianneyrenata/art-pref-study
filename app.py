@@ -801,7 +801,8 @@ def get_utility_viz():
     selector = session['selector']
 
     # Check if we have enough data (after burn-in)
-    if not hasattr(selector, 'get_utilities') or len(selector.comparisons) < 3:
+    # BALD requires at least 10 comparisons before GPPL model is fitted
+    if not hasattr(selector, 'get_utilities') or len(selector.comparisons) < 10:
         return jsonify({
             'success': True,
             'has_data': False
