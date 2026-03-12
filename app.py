@@ -818,6 +818,14 @@ def get_utility_viz():
         top_image_id = image_ids[top_idx]
         top_image_path = f"/images/{top_image_id}"
 
+        # Debug logging
+        print(f"\n=== UTILITY VIZ DEBUG ===")
+        print(f"Comparisons: {len(selector.comparisons)}")
+        print(f"Utility range: [{np.min(utilities):.4f}, {np.max(utilities):.4f}]")
+        print(f"Utility std: {np.std(utilities):.4f}")
+        print(f"Top image: {top_image_id}")
+        print(f"Top 5 utilities: {sorted(utilities, reverse=True)[:5]}")
+
         # Build timeline from tracking data
         timeline = []
         if hasattr(selector, 'tracking_data'):
