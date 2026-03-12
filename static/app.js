@@ -16,14 +16,20 @@ class ArtPreferenceStudy {
         this.surveyInterval = 5; // Show survey every N main comparisons (loaded from server)
         this.recommendations = [];
         this.selectedRecommendations = []; // Support multi-select
+        this.unselectedRecommendations = []; // Store unselected images
         this.recommendationType = null; // 'auto' or 'manual'
         this.isProcessing = false; // Prevent double-clicks
         this.practiceColorIndex = 0; // Track which color pair to show
 
-        // Ranking state
+        // Ranking state (for selected images)
         this.rankingStartTime = null;
         this.rankingMovements = [];
         this.currentRanking = {}; // position -> image_id mapping
+
+        // Second ranking state (for unselected images)
+        this.rankingUnselectedStartTime = null;
+        this.rankingUnselectedMovements = [];
+        this.currentRankingUnselected = {}; // position -> image_id mapping
 
         // Timing tracking for pair loading performance
         this.pairLoadingTimes = []; // Array to store loading times in ms
@@ -134,6 +140,7 @@ class ArtPreferenceStudy {
 
         // Ranking submit button
         document.getElementById('btn-submit-ranking').addEventListener('click', () => this.submitRanking());
+        document.getElementById('btn-submit-ranking-unselected').addEventListener('click', () => this.submitRankingUnselected());
     }
 
     setupKeyboardShortcuts() {
@@ -638,6 +645,10 @@ class ArtPreferenceStudy {
     confirmManualSelection() {
         if (this.selectedRecommendations.length === 0) return;
 
+        // Store unselected recommendations for second ranking
+        const selectedIds = this.selectedRecommendations.map(r => r.image_id);
+        this.unselectedRecommendations = this.recommendations.filter(r => !selectedIds.includes(r.image_id));
+
         // Only show ranking if multiple items selected
         if (this.recommendationConfig.manual_select_n > 1) {
             this.showRanking();
@@ -882,6 +893,223 @@ class ArtPreferenceStudy {
         ).filter(rec => rec !== undefined);
 
         this.selectedRecommendations = reordered;
+
+        // Show second ranking screen for unselected images
+        this.showRankingUnselected();
+    }
+
+    showRankingUnselected() {
+        this.showScreen('ranking-unselected');
+        this.rankingUnselectedStartTime = Date.now();
+        this.rankingUnselectedMovements = [];
+        this.currentRankingUnselected = {};
+
+        // Populate source area with unselected images
+        const sourceContainer = document.getElementById('ranking-unselected-source-images');
+        sourceContainer.innerHTML = '';
+
+        this.unselectedRecommendations.forEach((rec, i) => {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'ranking-image-unselected';
+            imgDiv.draggable = true;
+            imgDiv.dataset.imageId = rec.image_id;
+            imgDiv.innerHTML = `<img src="${rec.path}" alt="Artwork ${i + 1}">`;
+            sourceContainer.appendChild(imgDiv);
+        });
+
+        // Set up drag and drop event listeners for unselected ranking
+        this.setupRankingUnselectedDragAndDrop();
+
+        // Ensure continue button is disabled initially
+        document.getElementById('btn-submit-ranking-unselected').disabled = true;
+    }
+
+    setupRankingUnselectedDragAndDrop() {
+        // Get all draggable images in the unselected screen
+        const images = document.querySelectorAll('#screen-ranking-unselected .ranking-image-unselected');
+        const dropZones = document.querySelectorAll('#screen-ranking-unselected .drop-zone');
+        const sourceArea = document.getElementById('ranking-unselected-source-images');
+
+        // Set up drag events for images
+        images.forEach(img => {
+            img.addEventListener('dragstart', (e) => this.handleRankingUnselectedDragStart(e));
+            img.addEventListener('dragend', (e) => this.handleRankingUnselectedDragEnd(e));
+        });
+
+        // Set up drop zones
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => this.handleRankingDragOver(e));
+            zone.addEventListener('dragleave', (e) => this.handleRankingDragLeave(e));
+            zone.addEventListener('drop', (e) => this.handleRankingUnselectedDrop(e));
+        });
+
+        // Set up source area as drop zone for unranking
+        sourceArea.addEventListener('dragover', (e) => this.handleRankingDragOver(e));
+        sourceArea.addEventListener('drop', (e) => this.handleRankingUnselectedDropToSource(e));
+    }
+
+    handleRankingUnselectedDragStart(e) {
+        const imgDiv = e.target.closest('.ranking-image-unselected');
+        imgDiv.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', imgDiv.innerHTML);
+        e.dataTransfer.setData('image-id', imgDiv.dataset.imageId);
+    }
+
+    handleRankingUnselectedDragEnd(e) {
+        const imgDiv = e.target.closest('.ranking-image-unselected');
+        imgDiv.classList.remove('dragging');
+    }
+
+    handleRankingUnselectedDrop(e) {
+        e.preventDefault();
+        const dropZone = e.target.closest('.drop-zone');
+        if (!dropZone) return;
+
+        dropZone.classList.remove('drag-over');
+
+        const imageId = e.dataTransfer.getData('image-id');
+        const position = parseInt(dropZone.dataset.position);
+
+        // Find the dragged image element
+        const draggedImg = document.querySelector(`.ranking-image-unselected[data-image-id="${imageId}"]`);
+        if (!draggedImg) return;
+
+        // Check if this slot already has an image
+        const existingImg = dropZone.querySelector('.ranking-image-unselected');
+        const sourceArea = document.getElementById('ranking-unselected-source-images');
+
+        if (existingImg) {
+            // Swap: return existing image to source
+            const existingId = existingImg.dataset.imageId;
+            sourceArea.appendChild(existingImg);
+
+            // Remove old position from ranking
+            for (let pos in this.currentRankingUnselected) {
+                if (this.currentRankingUnselected[pos] === existingId) {
+                    delete this.currentRankingUnselected[pos];
+                    break;
+                }
+            }
+
+            // Record swap movement
+            this.rankingUnselectedMovements.push({
+                timestamp: Date.now() - this.rankingUnselectedStartTime,
+                image_id: existingId,
+                action: 'swap_out',
+                position: position,
+                to: 'source'
+            });
+        }
+
+        // Place dragged image in slot
+        dropZone.appendChild(draggedImg);
+        dropZone.classList.add('filled');
+
+        // Update ranking
+        const oldPosition = Object.keys(this.currentRankingUnselected).find(
+            pos => this.currentRankingUnselected[pos] === imageId
+        );
+
+        if (oldPosition) {
+            delete this.currentRankingUnselected[oldPosition];
+        }
+
+        this.currentRankingUnselected[position] = imageId;
+
+        // Record movement
+        this.rankingUnselectedMovements.push({
+            timestamp: Date.now() - this.rankingUnselectedStartTime,
+            image_id: imageId,
+            action: 'place',
+            position: position,
+            from: oldPosition ? parseInt(oldPosition) : 'source'
+        });
+
+        // Check if all slots are filled
+        this.checkRankingUnselectedComplete();
+    }
+
+    handleRankingUnselectedDropToSource(e) {
+        e.preventDefault();
+        const imageId = e.dataTransfer.getData('image-id');
+        const draggedImg = document.querySelector(`.ranking-image-unselected[data-image-id="${imageId}"]`);
+        if (!draggedImg) return;
+
+        const sourceArea = document.getElementById('ranking-unselected-source-images');
+
+        // Find which position this image was in
+        const oldPosition = Object.keys(this.currentRankingUnselected).find(
+            pos => this.currentRankingUnselected[pos] === imageId
+        );
+
+        if (oldPosition) {
+            // Remove from ranking
+            delete this.currentRankingUnselected[oldPosition];
+
+            // Clear the drop zone
+            const dropZone = document.querySelector(`#screen-ranking-unselected .drop-zone[data-position="${oldPosition}"]`);
+            if (dropZone) {
+                dropZone.classList.remove('filled');
+            }
+
+            // Record movement
+            this.rankingUnselectedMovements.push({
+                timestamp: Date.now() - this.rankingUnselectedStartTime,
+                image_id: imageId,
+                action: 'unrank',
+                position: null,
+                from: parseInt(oldPosition)
+            });
+        }
+
+        // Return to source
+        sourceArea.appendChild(draggedImg);
+
+        // Check completion status
+        this.checkRankingUnselectedComplete();
+    }
+
+    checkRankingUnselectedComplete() {
+        const numSlots = document.querySelectorAll('#screen-ranking-unselected .drop-zone').length;
+        const numRanked = Object.keys(this.currentRankingUnselected).length;
+
+        const continueBtn = document.getElementById('btn-submit-ranking-unselected');
+        continueBtn.disabled = numRanked !== numSlots;
+    }
+
+    async submitRankingUnselected() {
+        const rankingTimeMs = Date.now() - this.rankingUnselectedStartTime;
+
+        // Build final ranking array [1st, 2nd, 3rd, 4th, 5th]
+        const finalRanking = [];
+        for (let i = 1; i <= 5; i++) {
+            if (this.currentRankingUnselected[i]) {
+                finalRanking.push(this.currentRankingUnselected[i]);
+            }
+        }
+
+        const rankingData = {
+            final_ranking: finalRanking,
+            ranking_time_ms: rankingTimeMs,
+            num_movements: this.rankingUnselectedMovements.length,
+            movements: this.rankingUnselectedMovements
+        };
+
+        // Save to backend
+        try {
+            await fetch('/api/submit_ranking_unselected', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    ranking_data: rankingData
+                })
+            });
+        } catch (error) {
+            console.error('Error submitting unselected ranking:', error);
+            // Continue anyway - don't block user
+        }
 
         // Show final result
         this.showFinalResult();
