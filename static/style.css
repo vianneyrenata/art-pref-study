@@ -568,61 +568,66 @@ textarea {
 
 /* === Ranking Interface === */
 .ranking-container {
-    max-width: 1200px;
-    margin: 24px auto;
+    max-width: 900px;
+    margin: 32px auto;
 }
 
 .ranking-slots {
     display: flex;
-    flex-direction: row;
     gap: 12px;
-    margin-top: 32px;
     justify-content: center;
+    margin-bottom: 32px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
 }
 
 .ranking-slot {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+    flex: 1;
+    max-width: 160px;
 }
 
 .slot-label {
+    text-align: center;
     font-weight: 600;
     color: #667eea;
+    margin-bottom: 8px;
     font-size: 0.9em;
-    text-align: center;
 }
 
 .drop-zone {
-    width: 150px;
-    height: 150px;
-    border: 2px dashed #ddd;
+    width: 100%;
+    height: 180px;
+    border: 3px dashed #ccc;
     border-radius: 10px;
-    background: #f9f9f9;
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
-    position: relative;
 }
 
 .drop-zone.drag-over {
     border-color: #667eea;
     background: rgba(102, 126, 234, 0.1);
-    border-style: solid;
+    transform: scale(1.05);
 }
 
 .drop-zone.filled {
-    border-color: #667eea;
     border-style: solid;
-    background: white;
+    border-color: #667eea;
 }
 
 .ranking-source {
-    padding-bottom: 24px;
-    margin-bottom: 24px;
-    border-bottom: 2px solid #eee;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 16px;
+    background: #fff;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    min-height: 200px;
 }
 
 .source-label {
@@ -630,6 +635,7 @@ textarea {
     color: #555;
     margin-bottom: 12px;
     font-size: 0.9em;
+    display: none;
 }
 
 .source-images {
@@ -637,27 +643,26 @@ textarea {
     gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
-    min-height: 100px;
-    padding: 12px;
-    border-radius: 10px;
-    background: #f9f9f9;
 }
 
 .ranking-image {
-    width: 100px;
-    height: 100px;
+    width: 160px;
+    height: 180px;
+    cursor: move;
     border: 2px solid #ddd;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    cursor: grab;
     transition: all 0.3s;
     background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ranking-image:hover {
     transform: scale(1.05);
     border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 
 .ranking-image.dragging {
@@ -675,20 +680,23 @@ textarea {
 
 /* Unselected ranking images - same styles as selected */
 .ranking-image-unselected {
-    width: 100px;
-    height: 100px;
+    width: 160px;
+    height: 180px;
+    cursor: move;
     border: 2px solid #ddd;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    cursor: grab;
     transition: all 0.3s;
     background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ranking-image-unselected:hover {
     transform: scale(1.05);
     border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 
 .ranking-image-unselected.dragging {
@@ -707,31 +715,31 @@ textarea {
 /* Responsive design for ranking */
 @media (max-width: 768px) {
     .ranking-slots {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .ranking-slot {
         flex-direction: column;
         align-items: center;
     }
 
-    .slot-label {
-        text-align: center;
+    .ranking-slot {
+        max-width: 200px;
+        width: 100%;
     }
 
     .drop-zone {
-        width: 100px;
-        height: 100px;
+        height: 200px;
+    }
+
+    .ranking-source {
+        flex-direction: column;
+        align-items: center;
     }
 
     .ranking-image {
-        width: 80px;
-        height: 80px;
+        width: 200px;
+        height: 200px;
     }
 
     .ranking-image-unselected {
-        width: 80px;
-        height: 80px;
+        width: 200px;
+        height: 200px;
     }
 }
