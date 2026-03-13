@@ -31,6 +31,13 @@ class ArtPreferenceStudy {
         this.rankingUnselectedMovements = [];
         this.currentRankingUnselected = {}; // position -> image_id mapping
 
+        // Study code from URL parameter (one, two, or three)
+        this.studyCode = null;
+
+        // Utility visualization state (study=three only)
+        this.utilityVizData = null;
+        this.enableVizTracker = false; // Set based on URL parameter
+
         // Timing tracking for pair loading performance
         this.pairLoadingTimes = []; // Array to store loading times in ms
         this.selectionTimestamp = null; // When user made selection
@@ -158,9 +165,12 @@ class ArtPreferenceStudy {
             return;
         }
 
-        // Read study parameter from URL (?study=one or ?study=two)
+        // Read study parameter from URL (?study=one or ?study=two or ?study=three)
         const urlParams = new URLSearchParams(window.location.search);
-        const studyCode = urlParams.get('study');
+        this.studyCode = urlParams.get('study');  // Store for later use
+
+        // Enable viz tracker only for study=three
+        this.enableVizTracker = (this.studyCode === 'three');
 
         try {
             const response = await fetch('/api/start_session', {
@@ -414,6 +424,11 @@ class ArtPreferenceStudy {
                 this.practiceCount = data.practice_count;
                 this.mainCount = data.main_count;
 
+                // Update utility visualization if enabled and in main phase
+                if (this.enableVizTracker && this.phase === 'main') {
+                    this.fetchUtilityViz();
+                }
+
                 // Determine what happens next
                 const goesToRecommendations = data.phase === 'recommendations';
                 const goesToTransition = data.practice_complete && this.phase === 'practice';
@@ -438,6 +453,9 @@ class ArtPreferenceStudy {
 
                 if (goesToRecommendations) {
                     if (feedbackEl) feedbackEl.classList.add('hidden');
+                    if (this.enableVizTracker) {
+                        this.hideUtilityViz();
+                    }
                     this.phase = 'recommendations';
                     this.showModal('survey-modal');
                 } else if (goesToTransition) {
@@ -1288,7 +1306,8 @@ class ArtPreferenceStudy {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     session_id: this.sessionId,
-                    prolific_id: prolificId
+                    prolific_id: prolificId,
+                    study_code: this.studyCode
                 })
             });
 
@@ -1359,6 +1378,10 @@ class ArtPreferenceStudy {
         this.recommendations = [];
         this.selectedRecommendations = [];
         this.recommendationType = null;
+        this.utilityVizData = null;
+        if (this.enableVizTracker) {
+            this.hideUtilityViz();
+        }
 
         this.generateParticipantId(); // Generate new ID for new session
         document.getElementById('age-range').value = '';
@@ -1379,6 +1402,126 @@ class ArtPreferenceStudy {
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async fetchUtilityViz() {
+        try {
+            const response = await fetch('/api/get_utility_viz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: this.sessionId })
+            });
+
+            const data = await response.json();
+            if (data.success && data.has_data) {
+                this.utilityVizData = data;
+                this.renderUtilityViz();
+            } else {
+                // No data yet (burn-in phase)
+                this.hideUtilityViz();
+            }
+        } catch (error) {
+            console.error('Error fetching utility viz:', error);
+            this.hideUtilityViz();
+        }
+    }
+
+    renderUtilityViz() {
+        if (!this.utilityVizData) return;
+
+        const panel = document.getElementById('utility-viz-panel');
+        const thumb = document.getElementById('top-image-thumb');
+        const svg = document.getElementById('utility-timeline');
+
+        // Update thumbnail
+        if (this.utilityVizData.top_image && this.utilityVizData.top_image.path) {
+            thumb.src = this.utilityVizData.top_image.path;
+        }
+
+        // Render timeline
+        this.renderTimelineSVG(svg, this.utilityVizData.timeline);
+
+        // Show panel
+        panel.classList.remove('hidden');
+    }
+
+    renderTimelineSVG(svg, timeline) {
+        if (!timeline || timeline.length === 0) {
+            svg.innerHTML = '';
+            return;
+        }
+
+        // Get SVG dimensions
+        const width = 280;
+        const height = 60;
+        const padding = 5;
+
+        // Calculate scales
+        const xScale = (width - 2 * padding) / Math.max(1, timeline.length - 1);
+
+        // Get all utility values for scaling
+        const allUtilities = timeline.flatMap(t => [t.max_utility, t.mean_utility]);
+        const minUtil = Math.min(...allUtilities);
+        const maxUtil = Math.max(...allUtilities);
+        const utilRange = maxUtil - minUtil || 1;
+
+        const yScale = (y) => height - padding - ((y - minUtil) / utilRange) * (height - 2 * padding);
+
+        // Build SVG paths
+        let meanPath = '';
+        let maxPath = '';
+        const changeDots = [];
+        let currentDot = null;
+
+        timeline.forEach((point, i) => {
+            const x = padding + i * xScale;
+            const yMean = yScale(point.mean_utility);
+            const yMax = yScale(point.max_utility);
+
+            // Build polylines
+            if (i === 0) {
+                meanPath = `M ${x},${yMean}`;
+                maxPath = `M ${x},${yMax}`;
+            } else {
+                meanPath += ` L ${x},${yMean}`;
+                maxPath += ` L ${x},${yMax}`;
+            }
+
+            // Mark change points
+            if (point.top_changed && i > 0) {
+                changeDots.push({ x, y: yMax });
+            }
+
+            // Current (last) point
+            if (i === timeline.length - 1) {
+                currentDot = { x, y: yMax };
+            }
+        });
+
+        // Build SVG innerHTML
+        let svgContent = `
+            <path class="timeline-mean-line" d="${meanPath}"></path>
+            <path class="timeline-max-line" d="${maxPath}"></path>
+        `;
+
+        // Add change dots
+        changeDots.forEach(dot => {
+            svgContent += `<circle class="timeline-change-dot" cx="${dot.x}" cy="${dot.y}" r="3"></circle>`;
+        });
+
+        // Add current dot
+        if (currentDot) {
+            svgContent += `<circle class="timeline-current-dot" cx="${currentDot.x}" cy="${currentDot.y}" r="4"></circle>`;
+        }
+
+        svg.innerHTML = svgContent;
+    }
+
+    hideUtilityViz() {
+        const panel = document.getElementById('utility-viz-panel');
+        if (panel) {
+            panel.classList.add('hidden');
+        }
     }
 }
 

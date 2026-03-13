@@ -26,6 +26,13 @@
     "data_exports_path": "./data_exports"
   },
 
+  "s3": {
+    "enabled": false,
+    "bucket_name": "",
+    "participant_prefix": "participant",
+    "researcher_prefix": "researcher"
+  },
+
   "_comments": {
     "pair_selector_options": ["random", "bald"],
     "recommender_options": ["embedding", "utility"],

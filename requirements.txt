@@ -18,6 +18,9 @@ gpytorch>=1.11
 # Production server
 gunicorn>=21.0.0
 
+# AWS S3 for data backup
+boto3>=1.28.0
+
 # Optional: CLIP Embeddings (only needed if regenerating the database)
 # open-clip-torch>=2.20.0
 # pillow>=10.0.0

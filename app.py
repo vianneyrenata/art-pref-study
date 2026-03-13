@@ -13,6 +13,8 @@ from pathlib import Path
 from flask import Flask, render_template, jsonify, request, send_from_directory
 import chromadb
 import numpy as np
+import boto3
+from botocore.exceptions import ClientError
 
 from algorithms import RandomPairSelector, EmbeddingRecommender, BALD_AVAILABLE
 if BALD_AVAILABLE:
@@ -43,6 +45,11 @@ def load_config():
         # Recommendation settings
         'MANUAL_SHOW_N': cfg.get('recommendations', {}).get('manual_show_n', 3),
         'MANUAL_SELECT_N': cfg.get('recommendations', {}).get('manual_select_n', 1),
+        # S3 backup settings
+        'S3_ENABLED': cfg.get('s3', {}).get('enabled', False),
+        'S3_BUCKET': cfg.get('s3', {}).get('bucket_name', ''),
+        'S3_PARTICIPANT_PREFIX': cfg.get('s3', {}).get('participant_prefix', 'participant'),
+        'S3_RESEARCHER_PREFIX': cfg.get('s3', {}).get('researcher_prefix', 'researcher'),
     }
 
 CONFIG = load_config()
@@ -50,6 +57,57 @@ CONFIG = load_config()
 # === GLOBAL STATE ===
 # In production, use proper session management (Redis, database, etc.)
 sessions = {}
+
+# === S3 BACKUP ===
+def backup_session_to_s3(session_id, study_code=None):
+    """Backup session data to S3 after completion.
+
+    Args:
+        session_id: Session ID to backup
+        study_code: Optional study code (one, two, three) to determine backup path
+    """
+    if not CONFIG['S3_ENABLED'] or not CONFIG['S3_BUCKET']:
+        return  # S3 backup disabled
+
+    if session_id not in sessions:
+        print(f"Cannot backup session {session_id}: not found")
+        return
+
+    session = sessions[session_id]
+    export_path = Path(session['export_path'])
+
+    if not export_path.exists():
+        print(f"Cannot backup session {session_id}: export path does not exist")
+        return
+
+    try:
+        s3_client = boto3.client('s3')
+        bucket = CONFIG['S3_BUCKET']
+
+        # Determine S3 prefix based on study code
+        # study=three goes to researcher/, others go to participant/
+        if study_code == 'three':
+            prefix = CONFIG['S3_RESEARCHER_PREFIX']
+        else:
+            prefix = CONFIG['S3_PARTICIPANT_PREFIX']
+
+        # Upload all files in the session export directory
+        for file_path in export_path.rglob('*'):
+            if file_path.is_file():
+                relative_path = file_path.relative_to(export_path.parent)
+                s3_key = f"{prefix}/{relative_path}"
+
+                with open(file_path, 'rb') as f:
+                    s3_client.upload_fileobj(f, bucket, s3_key)
+
+                print(f"Uploaded {file_path.name} to s3://{bucket}/{s3_key}")
+
+        print(f"Session {session_id} backed up to S3: {prefix}/")
+
+    except ClientError as e:
+        print(f"Error backing up session {session_id} to S3: {e}")
+    except Exception as e:
+        print(f"Unexpected error backing up session {session_id} to S3: {e}")
 
 # Cache for style folder names (computed once at startup for fast image serving)
 _style_folders_cache = None
@@ -736,12 +794,106 @@ def submit_ranking_unselected():
     return jsonify({'success': True})
 
 
+@app.route('/api/get_utility_viz', methods=['POST'])
+def get_utility_viz():
+    """Get utility visualization data for real-time tracking during study."""
+    data = request.json
+    session_id = data.get('session_id')
+
+    if session_id not in sessions:
+        return jsonify({'error': 'Invalid session'}), 400
+
+    session = sessions[session_id]
+
+    # Only provide data if using BALD algorithm
+    if not session.get('use_bald', False):
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+    selector = session['selector']
+
+    # Check if we have enough data (after burn-in)
+    # BALD requires at least 10 comparisons before GPPL model is fitted
+    if len(selector.comparisons) < 10:
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+    # Check if model has been fitted
+    if not hasattr(selector, 'model') or selector.model is None:
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+    try:
+        image_ids = session['image_ids']
+
+        # Build timeline from tracking data and get top from latest iteration
+        timeline = []
+        latest_top_idx = None
+
+        if hasattr(selector, 'tracking_data'):
+            tracking = selector.tracking_data
+            utilities_history = tracking.get('utilities_per_iteration', [])
+
+            prev_top_idx = None
+            for i, utils in enumerate(utilities_history):
+                if len(utils) > 0:
+                    max_util = float(np.max(utils))
+                    mean_util = float(np.mean(utils))
+                    iter_top_idx = int(np.argmax(utils))
+
+                    top_changed = (prev_top_idx is not None and
+                                 iter_top_idx != prev_top_idx)
+
+                    timeline.append({
+                        'max_utility': max_util,
+                        'mean_utility': mean_util,
+                        'top_changed': top_changed
+                    })
+
+                    prev_top_idx = iter_top_idx
+                    latest_top_idx = iter_top_idx  # Use top from this iteration
+
+        # Fallback to get_utilities if no tracking data
+        if latest_top_idx is None:
+            utilities = selector.get_utilities()
+            if utilities is None or len(utilities) == 0:
+                return jsonify({'success': True, 'has_data': False})
+            latest_top_idx = int(np.argmax(utilities))
+
+        top_image_id = image_ids[latest_top_idx]
+        top_image_path = f"/images/{top_image_id}"
+
+        return jsonify({
+            'success': True,
+            'has_data': True,
+            'timeline': timeline,
+            'top_image': {
+                'id': top_image_id,
+                'path': top_image_path
+            }
+        })
+
+    except Exception as e:
+        print(f"Error generating utility viz: {e}")
+        return jsonify({
+            'success': True,
+            'has_data': False
+        })
+
+
 @app.route('/api/save_prolific_id', methods=['POST'])
 def save_prolific_id():
-    """Save Prolific ID mapping to session ID."""
+    """Save Prolific ID mapping to session ID and backup to S3."""
     data = request.json
     session_id = data.get('session_id')
     prolific_id = data.get('prolific_id', '').strip()
+    study_code = data.get('study_code')  # one, two, three
 
     if session_id not in sessions:
         return jsonify({'error': 'Invalid session'}), 400
@@ -754,7 +906,7 @@ def save_prolific_id():
     file_exists = mapping_path.exists()
 
     with open(mapping_path, 'a', newline='') as f:
-        fieldnames = ['session_id', 'prolific_id', 'timestamp']
+        fieldnames = ['session_id', 'prolific_id', 'timestamp', 'study_code']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
 
         if not file_exists:
@@ -763,8 +915,12 @@ def save_prolific_id():
         writer.writerow({
             'session_id': session_id,
             'prolific_id': prolific_id,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'study_code': study_code or ''
         })
+
+    # Backup session data to S3 (study=three goes to /researcher/, others to /participant/)
+    backup_session_to_s3(session_id, study_code)
 
     return jsonify({'success': True})
 
