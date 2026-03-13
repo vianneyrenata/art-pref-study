@@ -1262,3 +1262,127 @@ class ArtPreferenceStudy {
                 })
             });
 
+            // Skip ATI survey, go directly to Prolific screen
+            this.showScreen('prolific');
+        } catch (error) {
+            console.error('Error saving trust survey:', error);
+            this.showScreen('prolific');
+        }
+    }
+
+
+
+    async submitProlificId(e) {
+        e.preventDefault();
+
+        const prolificId = document.getElementById('prolific-id').value.trim();
+
+        if (!prolificId) {
+            alert('Please enter your Prolific ID to complete the study.');
+            return;
+        }
+
+        try {
+            await fetch('/api/save_prolific_id', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    prolific_id: prolificId
+                })
+            });
+
+            // Now show complete screen
+            this.showComplete();
+        } catch (error) {
+            console.error('Error saving Prolific ID:', error);
+            // Still show complete screen even if saving fails
+            this.showComplete();
+        }
+    }
+
+    async submitTimingStats() {
+        if (this.pairLoadingTimes.length === 0) return;
+
+        // Calculate statistics
+        const times = this.pairLoadingTimes;
+        const mean = times.reduce((sum, t) => sum + t, 0) / times.length;
+        const variance = times.reduce((sum, t) => sum + Math.pow(t - mean, 2), 0) / times.length;
+        const std = Math.sqrt(variance);
+        const min = Math.min(...times);
+        const max = Math.max(...times);
+
+        const stats = {
+            session_id: this.sessionId,
+            loading_times: times,
+            mean: Math.round(mean),
+            std: Math.round(std),
+            min: min,
+            max: max,
+            count: times.length
+        };
+
+        console.log('=== PAIR LOADING TIME STATISTICS ===');
+        console.log(`Mean: ${stats.mean}ms`);
+        console.log(`Std: ${stats.std}ms`);
+        console.log(`Min: ${stats.min}ms`);
+        console.log(`Max: ${stats.max}ms`);
+        console.log(`Count: ${stats.count}`);
+        console.log('====================================');
+
+        try {
+            await fetch('/api/submit_timing_stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stats)
+            });
+        } catch (error) {
+            console.error('Error submitting timing stats:', error);
+        }
+    }
+
+    async showComplete() {
+        // Submit timing statistics before showing complete screen
+        await this.submitTimingStats();
+
+        this.phase = 'complete';
+        this.showScreen('complete');
+        document.getElementById('final-session-id').textContent = this.sessionId;
+    }
+
+    restart() {
+        this.sessionId = null;
+        this.currentPair = null;
+        this.phase = 'welcome';
+        this.practiceCount = 0;
+        this.mainCount = 0;
+        this.recommendations = [];
+        this.selectedRecommendations = [];
+        this.recommendationType = null;
+
+        this.generateParticipantId(); // Generate new ID for new session
+        document.getElementById('age-range').value = '';
+        document.getElementById('gender').value = '';
+        document.getElementById('museum-visits').value = '';
+
+        // Reset survey forms
+        document.getElementById('trust-survey-form').reset();
+
+        // Reset final artwork container for next session
+        const finalArtwork = document.querySelector('.final-artwork');
+        if (finalArtwork) {
+            finalArtwork.innerHTML = '<img id="final-artwork-img" src="" alt="Your recommended artwork">';
+        }
+
+        this.showScreen('welcome');
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.study = new ArtPreferenceStudy();
+});
